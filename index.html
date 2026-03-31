@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Clasificador Arancelario — Estudio Coltellini</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0f1f38;
+    --navy-mid: #1a3358;
+    --navy-light: #243f6a;
+    --gold: #c9953a;
+    --gold-light: #e8b96a;
+    --cream: #f7f3ed;
+    --cream-dark: #ede8df;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --white: #ffffff;
+    --success: #2d6a4f;
+    --error: #c0392b;
+    --card-shadow: 0 4px 24px rgba(15,31,56,0.10);
+    --radius: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    padding: 0 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; color: var(--navy); font-weight: 700;
+  }
+  .logo-text { display: flex; flex-direction: column; }
+  .logo-text span:first-child {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; color: var(--white); font-weight: 600; line-height: 1.1;
+  }
+  .logo-text span:last-child {
+    font-size: 10px; color: var(--gold-light); letter-spacing: 0.12em;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .header-badge {
+    background: var(--navy-light);
+    color: var(--gold-light);
+    font-size: 10px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border: 1px solid rgba(201,149,58,0.3);
+  }
+
+  /* ── LAYOUT ── */
+  .main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  /* ── INPUT CARD ── */
+  .input-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--cream-dark);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .card-header {
+    background: var(--navy);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; color: var(--white); font-weight: 600;
+  }
+  .card-header .icon { font-size: 18px; }
+  .card-body { padding: 1.5rem; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 6px; margin-bottom: 1.2rem; }
+  .tab-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1.5px solid var(--cream-dark);
+    background: var(--cream);
+    color: var(--text-muted);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all .18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab-btn.active {
+    background: var(--navy); color: var(--white);
+    border-color: var(--navy);
+  }
+  .tab-btn:hover:not(.active) { border-color: var(--navy); color: var(--navy); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── TEXTAREA ── */
+  textarea {
+    width: 100%; min-height: 110px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text);
+    background: var(--cream);
+    resize: vertical;
+    transition: border .18s;
+    line-height: 1.6;
+  }
+  textarea:focus { outline: none; border-color: var(--navy); background: var(--white); }
+
+  /* ── FILE DROP ── */
+  .drop-zone {
+    border: 2px dashed var(--cream-dark);
+    border-radius: 10px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--cream);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--gold); background: #fdf8f1;
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon { font-size: 2rem; margin-bottom: 8px; }
+  .drop-zone p { font-size: 13px; color: var(--text-muted); }
+  .drop-zone strong { color: var(--navy); }
+  .preview-wrap { margin-top: 12px; }
+  .preview-wrap img { max-height: 180px; border-radius: 8px; box-shadow: var(--card-shadow); }
+  .file-name {
+    margin-top: 8px; font-size: 12px; color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── CLASSIFY BTN ── */
+  .classify-btn {
+    width: 100%; margin-top: 1.2rem;
+    padding: 14px;
+    background: var(--navy);
+    color: var(--white);
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    transition: background .18s, transform .1s;
+    letter-spacing: 0.02em;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .classify-btn:hover:not(:disabled) { background: var(--navy-mid); transform: translateY(-1px); }
+  .classify-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* ── LOADING ── */
+  .loading-wrap {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem; gap: 16px;
+  }
+  .loading-wrap.visible { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--cream-dark);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-step { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+  /* ── RESULT ── */
+  .result-wrap { display: none; }
+  .result-wrap.visible { display: block; }
+
+  /* NCM HERO */
+  .ncm-hero {
+    background: var(--navy);
+    border-radius: var(--radius);
+    padding: 1.8rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.2rem;
+    box-shadow: var(--card-shadow);
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .ncm-left { display: flex; flex-direction: column; gap: 4px; }
+  .ncm-label { font-size: 11px; color: var(--gold-light); letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; }
+  .ncm-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 2.8rem; color: var(--white); font-weight: 500; line-height: 1;
+    letter-spacing: 0.04em;
+  }
+  .ncm-desc { font-size: 14px; color: rgba(255,255,255,0.75); margin-top: 4px; max-width: 480px; line-height: 1.5; }
+  .confianza-badge {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .confianza-ring {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    border: 4px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 700; color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    background: rgba(201,149,58,0.08);
+  }
+  .confianza-label { font-size: 10px; color: var(--gold-light); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* SECTION CARDS */
+  .section-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--cream-dark);
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+  }
+  .section-card .s-header {
+    padding: .9rem 1.3rem;
+    background: var(--cream);
+    border-bottom: 1px solid var(--cream-dark);
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+  }
+  .section-card .s-header h3 {
+    font-size: 13px; font-weight: 600; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.08em; flex: 1;
+  }
+  .section-card .s-header .chevron { font-size: 12px; color: var(--text-muted); transition: transform .2s; }
+  .section-card.collapsed .chevron { transform: rotate(-90deg); }
+  .section-card .s-body { padding: 1.2rem 1.3rem; }
+  .section-card.collapsed .s-body { display: none; }
+
+  /* GRAVÁMENES TABLE */
+  .grav-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .grav-table th {
+    text-align: left; padding: 7px 10px;
+    background: var(--cream); color: var(--text-muted);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .grav-table td { padding: 8px 10px; border-bottom: 1px solid var(--cream-dark); vertical-align: middle; }
+  .grav-table tr:last-child td { border-bottom: none; }
+  .grav-table tr:hover td { background: var(--cream); }
+  .grav-code {
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--navy); font-weight: 500;
+  }
+  .grav-name { color: var(--text); font-weight: 500; }
+  .grav-rate {
+    font-family: 'DM Mono', monospace; font-weight: 600; color: var(--navy);
+    text-align: right;
+  }
+  .grav-status-P {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px;
+    background: #d1fae5; color: #065f46; letter-spacing: 0.05em;
+  }
+  .grav-status-X {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px;
+    background: #fee2e2; color: #991b1b; letter-spacing: 0.05em;
+    text-decoration: line-through;
+  }
+
+  /* INTERVENCIONES */
+  .interv-list { display: flex; flex-direction: column; gap: 8px; }
+  .interv-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px;
+    background: var(--cream);
+    border-radius: 8px;
+    border-left: 3px solid var(--gold);
+  }
+  .interv-org { font-weight: 600; font-size: 13px; color: var(--navy); min-width: 80px; }
+  .interv-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* RAZONAMIENTO */
+  .razonamiento-text {
+    font-size: 13.5px; line-height: 1.75; color: var(--text);
+    white-space: pre-line;
+  }
+
+  /* ALTERNATIVAS */
+  .alt-list { display: flex; flex-direction: column; gap: 8px; }
+  .alt-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    background: var(--cream);
+    border-radius: 8px;
+  }
+  .alt-code { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--navy); font-weight: 600; min-width: 100px; }
+  .alt-desc { font-size: 13px; color: var(--text-muted); flex: 1; }
+  .alt-motivo { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+  /* DICTAMEN TOGGLE */
+  .dictamen-toggle {
+    display: flex; gap: 8px; margin-bottom: 1rem;
+  }
+  .dict-btn {
+    padding: 7px 16px;
+    border-radius: 8px; border: 1.5px solid var(--cream-dark);
+    background: var(--cream); color: var(--text-muted);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all .15s; font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .dict-btn.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+  .dictamen-content {
+    font-size: 13px; line-height: 1.8; color: var(--text);
+    white-space: pre-line;
+    background: var(--cream);
+    border-radius: 8px; padding: 1rem 1.2rem;
+  }
+
+  /* PDF BTN */
+  .pdf-actions { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
+  .pdf-btn {
+    padding: 12px 24px;
+    border-radius: 10px; border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: all .18s;
+  }
+  .pdf-btn.primary { background: var(--gold); color: var(--navy); }
+  .pdf-btn.primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .pdf-btn.secondary {
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--cream-dark);
+  }
+  .pdf-btn.secondary:hover { border-color: var(--navy); transform: translateY(-1px); }
+  .pdf-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ERROR */
+  .error-box {
+    background: #fef2f2; border: 1px solid #fecaca;
+    border-radius: 10px; padding: 1rem 1.2rem;
+    color: var(--error); font-size: 13px; line-height: 1.6;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* NUEVA CLASIFICACIÓN */
+  .new-btn {
+    display: none; margin-bottom: 1.2rem;
+    padding: 10px 20px;
+    background: var(--white); color: var(--navy);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    transition: all .15s;
+  }
+  .new-btn.visible { display: inline-flex; align-items: center; gap: 6px; }
+  .new-btn:hover { border-color: var(--navy); }
+
+  @media (max-width: 600px) {
+    header { padding: 0 1rem; }
+    .main { padding: 1.2rem 1rem 3rem; }
+    .ncm-code { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">C</div>
+    <div class="logo-text">
+      <span>Estudio Coltellini</span>
+      <span>Clasificador Arancelario</span>
+    </div>
+  </div>
+  <div class="header-badge">NCM · MERCOSUR</div>
+</header>
+
+<div class="main">
+
+  <!-- INPUT CARD -->
+  <div class="input-card" id="inputCard">
+    <div class="card-header">
+      <span class="icon">🔍</span>
+      <h2>Nueva Clasificación</h2>
+    </div>
+    <div class="card-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('desc')">✏️ Descripción</button>
+        <button class="tab-btn" onclick="switchTab('img')">🖼️ Imagen</button>
+        <button class="tab-btn" onclick="switchTab('pdf')">📄 PDF</button>
+      </div>
+
+      <!-- DESCRIPCIÓN -->
+      <div class="tab-panel active" id="tab-desc">
+        <textarea id="descInput" placeholder="Describí la mercadería con el mayor detalle posible: composición, función, uso, presentación, dimensiones, normas técnicas relevantes..."></textarea>
+      </div>
+
+      <!-- IMAGEN -->
+      <div class="tab-panel" id="tab-img">
+        <div class="drop-zone" id="imgDrop">
+          <input type="file" id="imgFile" accept="image/*" onchange="handleImgFile(event)"/>
+          <div class="drop-icon">🖼️</div>
+          <p><strong>Arrastrá o hacé click</strong> para subir una imagen</p>
+          <p>JPG, PNG, WEBP — máx. 10 MB</p>
+          <div class="preview-wrap" id="imgPreview"></div>
+        </div>
+      </div>
+
+      <!-- PDF -->
+      <div class="tab-panel" id="tab-pdf">
+        <div class="drop-zone" id="pdfDrop">
+          <input type="file" id="pdfFile" accept="application/pdf" onchange="handlePdfFile(event)"/>
+          <div class="drop-icon">📄</div>
+          <p><strong>Arrastrá o hacé click</strong> para subir un PDF</p>
+          <p>Ficha técnica, catálogo, especificaciones — máx. 20 MB</p>
+          <div class="file-name" id="pdfName"></div>
+        </div>
+      </div>
+
+      <button class="classify-btn" id="classifyBtn" onclick="clasificar()">
+        <span>⚡</span> Clasificar mercadería
+      </button>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- LOADING -->
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="spinner"></div>
+    <div class="loading-step" id="loadingStep">Analizando mercadería...</div>
+  </div>
+
+  <!-- NUEVA CLASIFICACIÓN -->
+  <button class="new-btn" id="newBtn" onclick="resetAll()">← Nueva clasificación</button>
+
+  <!-- RESULTADO -->
+  <div class="result-wrap" id="resultWrap"></div>
+
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'coltellini_v6';
+let currentTab = 'desc';
+let imgData = null;      // base64
+let imgMime = null;
+let pdfData = null;      // base64
+let lastResult = null;
+let dictamenMode = 'cliente';
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['desc','img','pdf'][i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach((p,i) => {
+    p.classList.toggle('active', ['desc','img','pdf'][i] === tab);
+  });
+}
+
+// ── FILE HANDLERS ─────────────────────────────────────────────────────────
+function handleImgFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  imgMime = file.type;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imgData = ev.target.result.split(',')[1];
+    const prev = document.getElementById('imgPreview');
+    prev.innerHTML = `<img src="${ev.target.result}" alt="preview"/>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handlePdfFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  document.getElementById('pdfName').textContent = '📎 ' + file.name;
+  const reader = new FileReader();
+  reader.onload = ev => { pdfData = ev.target.result.split(',')[1]; };
+  reader.readAsDataURL(file);
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────
+['imgDrop','pdfDrop'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0]; if (!file) return;
+    if (id === 'imgDrop') { document.getElementById('imgFile').files = e.dataTransfer.files; handleImgFile({target:{files:e.dataTransfer.files}}); }
+    else { document.getElementById('pdfFile').files = e.dataTransfer.files; handlePdfFile({target:{files:e.dataTransfer.files}}); }
+  });
+});
+
+// ── LOADING STEPS ─────────────────────────────────────────────────────────
+const STEPS = [
+  'Extrayendo descripción de la mercadería...',
+  'Consultando nomenclatura arancelaria...',
+  'Analizando gravámenes e intervenciones...',
+  'Generando razonamiento clasificatorio...',
+  'Preparando dictamen final...',
+];
+let stepInterval;
+function startLoadingSteps() {
+  let i = 0;
+  document.getElementById('loadingStep').textContent = STEPS[0];
+  stepInterval = setInterval(() => {
+    i = (i + 1) % STEPS.length;
+    document.getElementById('loadingStep').textContent = STEPS[i];
+  }, 2800);
+}
+function stopLoadingSteps() { clearInterval(stepInterval); }
+
+// ── API CALL ──────────────────────────────────────────────────────────────
+async function callClaude(messages, system, maxTokens = 1000) {
+  const body = { model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, system, messages };
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json();
+  return data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+}
+
+// ── STEP 1: Extraer descripción ───────────────────────────────────────────
+async function extractDescription() {
+  if (currentTab === 'desc') {
+    return document.getElementById('descInput').value.trim();
+  }
+
+  let content = [];
+  if (currentTab === 'img' && imgData) {
+    content.push({ type: 'image', source: { type: 'base64', media_type: imgMime, data: imgData } });
+    content.push({ type: 'text', text: 'Describí esta mercadería en detalle: composición, materiales, función, uso previsto, características físicas relevantes para su clasificación arancelaria. Sé específico y técnico.' });
+  } else if (currentTab === 'pdf' && pdfData) {
+    content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfData } });
+    content.push({ type: 'text', text: 'Extraé y describí la mercadería de este documento: composición, materiales, función, uso previsto, especificaciones técnicas relevantes para su clasificación arancelaria.' });
+  } else {
+    throw new Error('No hay archivo cargado.');
+  }
+
+  return await callClaude(
+    [{ role: 'user', content }],
+    'Sos un experto en comercio exterior argentino. Tu tarea es extraer una descripción técnica precisa de la mercadería para clasificación arancelaria. Respondé solo con la descripción, sin saludos ni explicaciones.',
+    600
+  );
+}
+
+// ── STEP 2: Clasificar (JSON mínimo) ─────────────────────────────────────
+async function getClassification(descripcion) {
+  const system = `Sos un despachante de aduana experto en NCM Argentina/MERCOSUR. 
+Respondé ÚNICAMENTE con JSON válido, sin markdown, sin explicaciones. 
+El JSON debe tener exactamente esta estructura:
+{
+  "ncm": "NNNN.NN.NN",
+  "descripcion_ncm": "texto",
+  "confianza": 85,
+  "gravamenes": [
+    {"codigo": "010", "nombre": "Derecho de Importación", "alicuota": "18%", "estado": "P"},
+    {"codigo": "011", "nombre": "Tasa de Estadística", "alicuota": "3%", "estado": "P"},
+    {"codigo": "415", "nombre": "IVA", "alicuota": "21%", "estado": "P"},
+    {"codigo": "422", "nombre": "IVA Adicional", "alicuota": "10.5%", "estado": "P"},
+    {"codigo": "424", "nombre": "Ganancias", "alicuota": "6%", "estado": "P"},
+    {"codigo": "500", "nombre": "SIM", "alicuota": "0.5%", "estado": "P"}
+  ],
+  "intervenciones": [
+    {"organismo": "SENASA", "descripcion": "descripción"}
+  ],
+  "alternativas": [
+    {"ncm": "NNNN.NN.NN", "descripcion": "texto", "motivo_descarte": "motivo"}
+  ],
+  "rgi_aplicada": "RGI 1",
+  "notas_relevantes": "texto breve"
+}
+Estado P = cobrado, X = calculado no cobrado. 
+No incluyas LA ni LNA (ese régimen fue eliminado en Argentina).
+Solo incluí los gravámenes que efectivamente aplican a la NCM.`;
+
+  const prompt = `Clasificá la siguiente mercadería en la NCM Argentina y devolvé el JSON completo:\n\n${descripcion}`;
+  const raw = await callClaude([{ role: 'user', content: prompt }], system, 1000);
+  const clean = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+// ── STEP 3: Razonamiento + Dictamen ──────────────────────────────────────
+async function getRazonamiento(descripcion, clasificacion) {
+  const system = `Sos un despachante de aduana experto redactando el fundamento técnico de una clasificación arancelaria NCM Argentina. Escribí en español profesional, sin markdown, sin asteriscos.`;
+
+  const prompt = `La mercadería "${descripcion}" fue clasificada en NCM ${clasificacion.ncm} (${clasificacion.descripcion_ncm}) usando ${clasificacion.rgi_aplicada}.
+
+Redactá:
+1. RAZONAMIENTO CLASIFICATORIO (3-4 párrafos): Fundamento técnico-legal usando las RGI, Notas de Sección/Capítulo, y por qué esta NCM es correcta. Mencioná las alternativas descartadas si las hay.
+2. DICTAMEN CLIENTE (2 párrafos): Versión accesible para el importador, sin tecnicismos excesivos.
+3. DICTAMEN INTERNO (2 párrafos): Versión para el equipo del estudio, con referencias legales precisas.
+
+Separalos con las etiquetas exactas:
+[RAZONAMIENTO]
+...texto...
+[DICTAMEN_CLIENTE]
+...texto...
+[DICTAMEN_INTERNO]
+...texto...`;
+
+  return await callClaude([{ role: 'user', content: prompt }], system, 1000);
+}
+
+// ── MAIN CLASIFICAR ───────────────────────────────────────────────────────
+async function clasificar() {
+  const btn = document.getElementById('classifyBtn');
+  btn.disabled = true;
+  document.getElementById('errorBox').classList.remove('visible');
+  document.getElementById('resultWrap').classList.remove('visible');
+  document.getElementById('resultWrap').innerHTML = '';
+  document.getElementById('loadingWrap').classList.add('visible');
+  document.getElementById('newBtn').classList.remove('visible');
+  startLoadingSteps();
+
+  try {
+    // Step 1
+    const descripcion = await extractDescription();
+    if (!descripcion) throw new Error('Ingresá una descripción o cargá un archivo.');
+
+    // Step 2
+    const clasificacion = await getClassification(descripcion);
+
+    // Step 3
+    const textos = await getRazonamiento(descripcion, clasificacion);
+
+    const razonamiento = extractSection(textos, 'RAZONAMIENTO');
+    const dictCliente  = extractSection(textos, 'DICTAMEN_CLIENTE');
+    const dictInterno  = extractSection(textos, 'DICTAMEN_INTERNO');
+
+    lastResult = { descripcion, clasificacion, razonamiento, dictCliente, dictInterno };
+
+    // Save to localStorage
+    const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    history.unshift({ ts: new Date().toISOString(), ...lastResult });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 50)));
+
+    renderResult(lastResult);
+
+  } catch(err) {
+    const box = document.getElementById('errorBox');
+    box.textContent = '⚠️ ' + (err.message || 'Error al clasificar. Intentá de nuevo.');
+    box.classList.add('visible');
+  } finally {
+    stopLoadingSteps();
+    document.getElementById('loadingWrap').classList.remove('visible');
+    btn.disabled = false;
+    document.getElementById('newBtn').classList.add('visible');
+  }
+}
+
+function extractSection(text, tag) {
+  const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(?=\\[|$)`);
+  const m = text.match(re);
+  return m ? m[1].trim() : '';
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderResult({ descripcion, clasificacion, razonamiento, dictCliente, dictInterno }) {
+  const c = clasificacion;
+  const wrap = document.getElementById('resultWrap');
+  wrap.classList.add('visible');
+
+  wrap.innerHTML = `
+    <!-- NCM HERO -->
+    <div class="ncm-hero">
+      <div class="ncm-left">
+        <div class="ncm-label">NCM Asignada</div>
+        <div class="ncm-code">${c.ncm}</div>
+        <div class="ncm-desc">${c.descripcion_ncm}</div>
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.55);">
+          ${c.rgi_aplicada} &nbsp;·&nbsp; ${c.notas_relevantes || ''}
+        </div>
+      </div>
+      <div class="confianza-badge">
+        <div class="confianza-ring">${c.confianza}%</div>
+        <div class="confianza-label">Confianza</div>
+      </div>
+    </div>
+
+    <!-- GRAVÁMENES -->
+    <div class="section-card" id="sc-grav">
+      <div class="s-header" onclick="toggleCard('sc-grav')">
+        <span>📊</span>
+        <h3>Gravámenes</h3>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="s-body">
+        <table class="grav-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Gravamen</th>
+              <th>Estado</th>
+              <th style="text-align:right">Alícuota</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(c.gravamenes||[]).map(g => `
+              <tr>
+                <td><span class="grav-code">${g.codigo}</span></td>
+                <td><span class="grav-name">${g.nombre}</span></td>
+                <td><span class="grav-status-${g.estado}">${g.estado}</span></td>
+                <td class="grav-rate">${g.alicuota}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INTERVENCIONES -->
+    ${(c.intervenciones||[]).length ? `
+    <div class="section-card" id="sc-int">
+      <div class="s-header" onclick="toggleCard('sc-int')">
+        <span>🏛️</span>
+        <h3>Intervenciones</h3>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="s-body">
+        <div class="interv-list">
+          ${c.intervenciones.map(i => `
+            <div class="interv-item">
+              <span class="interv-org">${i.organismo}</span>
+              <span class="interv-desc">${i.descripcion}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- RAZONAMIENTO -->
+    <div class="section-card" id="sc-raz">
+      <div class="s-header" onclick="toggleCard('sc-raz')">
+        <span>⚖️</span>
+        <h3>Razonamiento Clasificatorio</h3>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="s-body">
+        <div class="razonamiento-text">${razonamiento}</div>
+      </div>
+    </div>
+
+    <!-- ALTERNATIVAS -->
+    ${(c.alternativas||[]).length ? `
+    <div class="section-card collapsed" id="sc-alt">
+      <div class="s-header" onclick="toggleCard('sc-alt')">
+        <span>🔀</span>
+        <h3>Posiciones Alternativas Descartadas</h3>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="s-body">
+        <div class="alt-list">
+          ${c.alternativas.map(a => `
+            <div class="alt-item">
+              <span class="alt-code">${a.ncm}</span>
+              <div>
+                <div class="alt-desc">${a.descripcion}</div>
+                <div class="alt-motivo">Descartada: ${a.motivo_descarte}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- DICTAMEN -->
+    <div class="section-card" id="sc-dict">
+      <div class="s-header" onclick="toggleCard('sc-dict')">
+        <span>📋</span>
+        <h3>Dictamen de Clasificación</h3>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="s-body">
+        <div class="dictamen-toggle">
+          <button class="dict-btn active" onclick="switchDictamen('cliente',this)">Cliente</button>
+          <button class="dict-btn" onclick="switchDictamen('interno',this)">Interno</button>
+        </div>
+        <div class="dictamen-content" id="dictContent">${dictCliente}</div>
+      </div>
+    </div>
+
+    <!-- ACCIONES PDF -->
+    <div class="pdf-actions">
+      <button class="pdf-btn primary" onclick="generarPDF('cliente')">
+        📥 Dictamen Cliente (PDF)
+      </button>
+      <button class="pdf-btn secondary" onclick="generarPDF('interno')">
+        📥 Dictamen Interno (PDF)
+      </button>
+    </div>
+  `;
+
+  // Store texts for dictamen switching
+  wrap._dictCliente = dictCliente;
+  wrap._dictInterno = dictInterno;
+
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleCard(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function switchDictamen(mode, btn) {
+  dictamenMode = mode;
+  document.querySelectorAll('.dict-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap = document.getElementById('resultWrap');
+  document.getElementById('dictContent').textContent =
+    mode === 'cliente' ? wrap._dictCliente : wrap._dictInterno;
+}
+
+// ── PDF GENERATION ────────────────────────────────────────────────────────
+async function generarPDF(modo) {
+  if (!lastResult) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const c = lastResult.clasificacion;
+  const W = 210; const H = 297;
+  const margin = 20;
+  const usable = W - margin * 2;
+  let y = 0;
+
+  const navy = [15, 31, 56];
+  const gold = [201, 149, 58];
+  const cream = [247, 243, 237];
+  const grey = [107, 114, 128];
+  const black = [26, 26, 46];
+  const white = [255, 255, 255];
+
+  function checkPage(needed = 20) {
+    if (y + needed > H - 20) {
+      doc.addPage();
+      y = 20;
+      drawHeader();
+    }
+  }
+
+  function drawHeader() {
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, W, 16, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...gold);
+    doc.text('ESTUDIO COLTELLINI · CLASIFICACIÓN ARANCELARIA NCM', margin, 10);
+    doc.setTextColor(...white);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(new Date().toLocaleDateString('es-AR'), W - margin, 10, { align: 'right' });
+  }
+
+  function drawFooter() {
+    const pages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFillColor(...cream);
+      doc.rect(0, H - 12, W, 12, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...grey);
+      doc.text('Estudio Coltellini · Uso ' + (modo === 'cliente' ? 'del importador' : 'interno'), margin, H - 4);
+      doc.text(`Página ${i} de ${pages}`, W - margin, H - 4, { align: 'right' });
+    }
+  }
+
+  function addText(text, x, yPos, opts = {}) {
+    const {
+      size = 10, color = black, font = 'normal',
+      align = 'left', maxWidth = usable
+    } = opts;
+    doc.setFont('helvetica', font);
+    doc.setFontSize(size);
+    doc.setTextColor(...color);
+    const lines = doc.splitTextToSize(String(text), maxWidth);
+    doc.text(lines, x, yPos, { align });
+    return lines.length * (size * 0.4 + 1.2);
+  }
+
+  // ── COVER ────────────────────────────────────────────────────────────────
+  // BG
+  doc.setFillColor(...navy);
+  doc.rect(0, 0, W, H, 'F');
+
+  // Gold accent bar
+  doc.setFillColor(...gold);
+  doc.rect(0, 70, W, 3, 'F');
+  doc.rect(0, 190, W, 3, 'F');
+
+  // Logo mark
+  doc.setFillColor(...gold);
+  doc.roundedRect(margin, 30, 18, 18, 3, 3, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...navy);
+  doc.text('C', margin + 9, 42, { align: 'center' });
+
+  // Studio name
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...white);
+  doc.text('Estudio Coltellini', margin + 22, 37);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...gold);
+  doc.text('COMERCIO EXTERIOR', margin + 22, 44);
+
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.setTextColor(...white);
+  doc.text('Dictamen de', margin, 100);
+  doc.text('Clasificación', margin, 116);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(13);
+  doc.setTextColor(...gold);
+  doc.text('ARANCELARIA NCM', margin, 128);
+
+  // Tipo
+  const tipoLabel = modo === 'cliente' ? 'VERSIÓN IMPORTADOR' : 'VERSIÓN INTERNA';
+  doc.setFillColor(...gold);
+  doc.roundedRect(margin, 140, 70, 10, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  doc.text(tipoLabel, margin + 35, 146.5, { align: 'center' });
+
+  // NCM box
+  doc.setFillColor(26, 51, 88);
+  doc.roundedRect(margin, 200, usable, 50, 4, 4, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...gold);
+  doc.text('POSICIÓN ARANCELARIA', margin + 10, 213);
+  doc.setFontSize(30);
+  doc.setTextColor(...white);
+  doc.text(c.ncm, margin + 10, 232);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(200, 210, 230);
+  const descLines = doc.splitTextToSize(c.descripcion_ncm, usable - 20);
+  doc.text(descLines, margin + 10, 242);
+
+  // Date bottom
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(150, 170, 200);
+  doc.text(`Buenos Aires, ${new Date().toLocaleDateString('es-AR', {day:'numeric',month:'long',year:'numeric'})}`, margin, H - 20);
+
+  // ── PAGE 2: DATOS + DICTAMEN ──────────────────────────────────────────────
+  doc.addPage();
+  y = 20;
+  drawHeader();
+  y = 24;
+
+  // Section: Datos de la clasificación
+  doc.setFillColor(...cream);
+  doc.roundedRect(margin, y, usable, 8, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  doc.text('DATOS DE LA CLASIFICACIÓN', margin + 4, y + 5.5);
+  y += 12;
+
+  // NCM + confianza row
+  doc.setFillColor(236, 244, 255);
+  doc.roundedRect(margin, y, usable, 20, 3, 3, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(...navy);
+  doc.text(c.ncm, margin + 6, y + 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...grey);
+  const descW = doc.splitTextToSize(c.descripcion_ncm, usable - 70);
+  doc.text(descW, margin + 6, y + 20 > y + 8 ? y + 19 : y + 8);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...gold);
+  doc.text(`${c.confianza}%`, W - margin - 4, y + 10, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(...grey);
+  doc.text('CONFIANZA', W - margin - 4, y + 16, { align: 'right' });
+  y += 26;
+
+  // RGI + Notas
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...grey);
+  doc.text(`Regla aplicada: ${c.rgi_aplicada || 'RGI 1'}   ·   ${c.notas_relevantes || ''}`, margin, y);
+  y += 8;
+
+  // GRAVÁMENES
+  checkPage(30);
+  doc.setFillColor(...cream);
+  doc.roundedRect(margin, y, usable, 8, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  doc.text('GRAVÁMENES', margin + 4, y + 5.5);
+  y += 12;
+
+  // Table header
+  const cols = [30, 90, 20, 30];
+  const heads = ['Código', 'Gravamen', 'Estado', 'Alícuota'];
+  let x = margin;
+  doc.setFillColor(...navy);
+  doc.rect(margin, y, usable, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...white);
+  heads.forEach((h, i) => {
+    doc.text(h, x + 2, y + 5);
+    x += cols[i];
+  });
+  y += 7;
+
+  // Table rows
+  (c.gravamenes || []).forEach((g, idx) => {
+    checkPage(8);
+    const bg = idx % 2 === 0 ? [250,250,252] : [255,255,255];
+    doc.setFillColor(...bg);
+    doc.rect(margin, y, usable, 7, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...black);
+    let cx = margin;
+    doc.text(g.codigo, cx + 2, y + 5); cx += cols[0];
+    doc.text(g.nombre, cx + 2, y + 5); cx += cols[1];
+    // Estado badge color
+    if (g.estado === 'P') doc.setTextColor(6, 95, 70);
+    else doc.setTextColor(153, 27, 27);
+    doc.setFont('helvetica', 'bold');
+    doc.text(g.estado, cx + 2, y + 5); cx += cols[2];
+    doc.setTextColor(...navy);
+    doc.text(g.alicuota, cx + 2, y + 5);
+    y += 7;
+  });
+  y += 8;
+
+  // INTERVENCIONES
+  if ((c.intervenciones || []).length) {
+    checkPage(20);
+    doc.setFillColor(...cream);
+    doc.roundedRect(margin, y, usable, 8, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...navy);
+    doc.text('INTERVENCIONES', margin + 4, y + 5.5);
+    y += 12;
+
+    c.intervenciones.forEach(interv => {
+      checkPage(14);
+      doc.setFillColor(255, 248, 230);
+      doc.roundedRect(margin, y, usable, 10, 2, 2, 'F');
+      doc.setFillColor(...gold);
+      doc.rect(margin, y, 2.5, 10, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...navy);
+      doc.text(interv.organismo, margin + 6, y + 4.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...grey);
+      const descL = doc.splitTextToSize(interv.descripcion, usable - 40);
+      doc.text(descL[0] || '', margin + 6, y + 8.5);
+      y += 13;
+    });
+    y += 4;
+  }
+
+  // DICTAMEN
+  checkPage(30);
+  const dictTitle = modo === 'cliente' ? 'DICTAMEN — VERSIÓN IMPORTADOR' : 'DICTAMEN — VERSIÓN INTERNA';
+  const dictText = modo === 'cliente' ? lastResult.dictCliente : lastResult.dictInterno;
+  doc.setFillColor(...navy);
+  doc.roundedRect(margin, y, usable, 8, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...white);
+  doc.text(dictTitle, margin + 4, y + 5.5);
+  y += 12;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(...black);
+  const dictLines = doc.splitTextToSize(dictText, usable);
+  dictLines.forEach(line => {
+    checkPage(6);
+    doc.text(line, margin, y);
+    y += 5.5;
+  });
+  y += 8;
+
+  // RAZONAMIENTO
+  checkPage(20);
+  doc.setFillColor(...cream);
+  doc.roundedRect(margin, y, usable, 8, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  doc.text('RAZONAMIENTO CLASIFICATORIO', margin + 4, y + 5.5);
+  y += 12;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...black);
+  const razLines = doc.splitTextToSize(lastResult.razonamiento, usable);
+  razLines.forEach(line => {
+    checkPage(6);
+    doc.text(line, margin, y);
+    y += 5;
+  });
+
+  // ALTERNATIVAS
+  if ((c.alternativas || []).length) {
+    y += 6;
+    checkPage(20);
+    doc.setFillColor(...cream);
+    doc.roundedRect(margin, y, usable, 8, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...navy);
+    doc.text('POSICIONES ALTERNATIVAS DESCARTADAS', margin + 4, y + 5.5);
+    y += 12;
+
+    c.alternativas.forEach(alt => {
+      checkPage(14);
+      doc.setFillColor(250, 250, 252);
+      doc.roundedRect(margin, y, usable, 11, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...navy);
+      doc.text(alt.ncm, margin + 4, y + 5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...grey);
+      doc.text(alt.descripcion, margin + 4, y + 9.5);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7.5);
+      doc.text('Descartada: ' + alt.motivo_descarte, W - margin - 4, y + 7, { align: 'right' });
+      y += 14;
+    });
+  }
+
+  drawFooter();
+
+  // SAVE
+  const fname = `Dictamen_NCM_${c.ncm.replace(/\./g,'')}_${modo}.pdf`;
+  doc.save(fname);
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────
+function resetAll() {
+  lastResult = null;
+  imgData = null; imgMime = null; pdfData = null;
+  document.getElementById('descInput').value = '';
+  document.getElementById('imgPreview').innerHTML = '';
+  document.getElementById('pdfName').textContent = '';
+  document.getElementById('resultWrap').classList.remove('visible');
+  document.getElementById('resultWrap').innerHTML = '';
+  document.getElementById('errorBox').classList.remove('visible');
+  document.getElementById('newBtn').classList.remove('visible');
+  switchTab('desc');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
